@@ -31,12 +31,22 @@ def load_suite(path: str | Path) -> tuple[str, list[TestCase]]:
         tests.append(
             TestCase(
                 name=str(item["name"]),
-                command=str(item["command"]),
+                id=str(item.get("id", "")),
+                command=(
+                    [str(part) for part in item["command"]]
+                    if isinstance(item["command"], list)
+                    else str(item["command"])
+                ),
+                executor=str(item.get("executor", "local")),
                 timeout=float(item.get("timeout", 60)),
                 expected_exit_code=int(item.get("expected_exit_code", 0)),
                 tags=[str(tag) for tag in item.get("tags", [])],
                 env={str(key): str(value) for key, value in item.get("env", {}).items()},
+                retries=int(item.get("retries", 0)),
+                shell=bool(item.get("shell", False)),
+                performance={
+                    str(key): float(value) for key, value in item.get("performance", {}).items()
+                },
             )
         )
     return suite_name, tests
-

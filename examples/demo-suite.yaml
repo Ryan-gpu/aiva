@@ -1,16 +1,32 @@
-suite: interview-demo
+suite: gpu-platform-validation-demo
 tests:
-  - name: Python runtime smoke test
-    command: "{python} -c \"print('runtime ready')\""
+  - id: runtime-smoke
+    name: Python runtime smoke test
+    command: ["{python}", "-c", "print('runtime ready')"]
     timeout: 10
     tags: [smoke, functional]
 
-  - name: Simulated GPU device-loss failure
-    command: "{python} -c \"import sys; print('GPU device lost', file=sys.stderr); sys.exit(1)\""
+  - id: gpu-device-loss
+    name: Simulated GPU device-loss failure
+    command:
+      - "{python}"
+      - "-c"
+      - "import sys; print('GPU device lost', file=sys.stderr); sys.exit(1)"
     timeout: 10
+    retries: 1
     tags: [gpu, fault-injection]
 
-  - name: Simulated timeout
-    command: "{python} -c \"import time; time.sleep(2)\""
+  - id: stability-timeout
+    name: Simulated timeout
+    command: ["{python}", "-c", "import time; time.sleep(2)"]
     timeout: 0.1
     tags: [stability, fault-injection]
+
+  - id: performance-baseline
+    name: Performance baseline sample
+    command: ["{python}", "-c", "sum(i * i for i in range(10000))"]
+    timeout: 10
+    performance:
+      max_regression_percent: 20
+    tags: [performance]
+

@@ -1,11 +1,9 @@
-import sys
-
 from aiva.models import TestCase as Case, TestStatus as Status
 from aiva.runner import ValidationRunner
 
 
 def test_runner_passes_expected_command() -> None:
-    test = Case(name="pass", command=f'{sys.executable} -c "print(42)"')
+    test = Case(name="pass", command=["{python}", "-c", "print(42)"])
     result = ValidationRunner().run_test(test)
     assert result.status == Status.PASSED
     assert "42" in result.stdout
@@ -13,7 +11,26 @@ def test_runner_passes_expected_command() -> None:
 
 
 def test_runner_diagnoses_failure() -> None:
-    command = f'{sys.executable} -c "import sys; print(\'Out of memory\', file=sys.stderr); sys.exit(1)"'
+    command = [
+        "{python}",
+        "-c",
+        "import sys; print('Out of memory', file=sys.stderr); sys.exit(1)",
+    ]
     result = ValidationRunner().run_test(Case(name="oom", command=command))
     assert result.status == Status.FAILED
     assert result.diagnosis["primary_signature"] == "out_of_memory"
+
+
+def test_runner_retries_failure() -> None:
+    command = ["{python}", "-c", "import sys; sys.exit(1)"]
+    result = ValidationRunner().run_test(Case(name="retry", command=command, retries=2))
+    assert result.attempts == 3
+
+
+def test_parallel_suite_preserves_order() -> None:
+    tests = [
+        Case(name="first", command=["{python}", "-c", "print('first')"]),
+        Case(name="second", command=["{python}", "-c", "print('second')"]),
+    ]
+    report = ValidationRunner(max_workers=2).run_suite("parallel", tests)
+    assert [result.name for result in report.results] == ["first", "second"]

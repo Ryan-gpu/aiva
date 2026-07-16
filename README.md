@@ -2,9 +2,9 @@
 
 **AI-Driven Intelligent Validation & Automation Framework**
 
-AIVA is a portable Python framework for functional, performance, stability, and
-system-level validation. It turns declarative test suites into reproducible runs,
-collects telemetry, classifies failures, and produces interview-friendly reports.
+AIVA is a plugin-oriented Python validation platform for functional, performance,
+stability, and system-level testing. It separates orchestration from target-specific
+execution, evidence collection, and root-cause analysis.
 
 The project is inspired by real validation work across GPU, SoC, firmware, drivers,
 operating systems, and AI software stacks. It deliberately uses public, portable
@@ -13,21 +13,29 @@ examples so anyone can run the demo without proprietary hardware or internal too
 ## Why AIVA
 
 - One YAML format for smoke, regression, stress, and fault-injection tests
-- Command execution with environment overrides and timeouts
+- Safe command execution without a shell by default
+- Pluggable executors, collectors, and analyzers
+- Lifecycle guarantees: prepare, execute/retry, collect, analyze, cleanup
+- Concurrent scheduling with deterministic report ordering
 - Lightweight host telemetry captured for every test
 - Deterministic failure signatures for GPU, crash, timeout, memory, and permission issues
-- AI-ready analyzer interface without requiring an API key for the default demo
+- SQLite performance baselines and regression thresholds
+- AI-ready analyzer contract without requiring an API key for the default demo
 - JSON and standalone HTML reports
 - CI validation across supported Python versions
 
 ## Architecture
 
 ```text
-YAML Suite -> Config Loader -> Validation Runner -> Command Adapter
-                                      |-> Telemetry Collector
-                                      |-> Failure Analyzer
-                                      `-> JSON / HTML Reports
+YAML Suite -> Concurrent Orchestrator -> Plugin Registry
+                  |                       |-> Executors
+                  |                       |-> Collectors
+                  |                       `-> Analyzers
+                  `-> Evidence + Baselines -> JSON / HTML Reports
 ```
+
+See [the architecture document](docs/architecture.md) for contracts, lifecycle,
+failure boundaries, and an extension example.
 
 ## Quick start
 
@@ -37,10 +45,10 @@ cd aiva
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
-aiva run examples/demo-suite.yaml
+aiva run examples/demo-suite.yaml --workers 2 --baseline-db reports/history.db
 ```
 
-The demo intentionally contains one passing test and two injected failures. AIVA
+The demo contains functional and performance samples plus injected GPU and timeout failures. AIVA
 returns a non-zero exit status when a suite fails, which makes it suitable for CI.
 Open `reports/report.html` to inspect the summary and automatic diagnoses.
 
@@ -50,7 +58,7 @@ Open `reports/report.html` to inspect the summary and automatic diagnoses.
 suite: smoke
 tests:
   - name: Runtime check
-    command: "{python} -c \"print('ready')\""
+    command: ["{python}", "-c", "print('ready')"]
     timeout: 10
     tags: [smoke]
 ```
@@ -61,18 +69,17 @@ across virtual environments and CI workers.
 ## Roadmap
 
 - OpenAI-compatible root-cause analysis provider with redaction controls
-- Performance baselines and regression thresholds
 - SSH, Docker, and device-lab execution adapters
 - PyTorch and OpenVINO workload plugins
-- Parallel scheduling, retries, and quarantine policies
+- Dependency graphs and quarantine policies
 - JUnit XML and historical trend dashboard
 
 ## Interview demo
 
-1. Explain how the runner separates configuration, execution, telemetry, diagnosis, and reporting.
+1. Explain why orchestration depends on plugin contracts instead of target implementations.
 2. Run the fault-injection suite and show that known signatures are classified automatically.
 3. Open the HTML report and discuss how telemetry supports root-cause analysis.
-4. Extend `FailureAnalyzer` or add a hardware-specific execution adapter live.
+4. Add a hardware-specific executor or collector without changing the scheduler.
 
 ## Safety and confidentiality
 
