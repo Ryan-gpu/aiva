@@ -32,7 +32,7 @@ YAML Suite -> Config Loader -> Validation Runner -> Command Adapter
 ## Quick start
 
 ```bash
-git clone https://github.com/<your-user>/aiva.git
+git clone https://github.com/Ryan-gpu/aiva.git
 cd aiva
 python -m venv .venv
 source .venv/bin/activate
