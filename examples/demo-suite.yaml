@@ -1,0 +1,16 @@
+suite: interview-demo
+tests:
+  - name: Python runtime smoke test
+    command: "{python} -c \"print('runtime ready')\""
+    timeout: 10
+    tags: [smoke, functional]
+
+  - name: Simulated GPU device-loss failure
+    command: "{python} -c \"import sys; print('GPU device lost', file=sys.stderr); sys.exit(1)\""
+    timeout: 10
+    tags: [gpu, fault-injection]
+
+  - name: Simulated timeout
+    command: "{python} -c \"import time; time.sleep(2)\""
+    timeout: 0.1
+    tags: [stability, fault-injection]
